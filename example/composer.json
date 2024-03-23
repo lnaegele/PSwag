@@ -1,0 +1,17 @@
+{
+    "name": "pswag/example",
+    "autoload": {
+        "psr-4": {
+            "PSwag\\Example\\": "./",
+            "PSwag\\": "../src/"
+        }
+    },
+    "require": {
+        "php-di/php-di": "^7.0",
+        "slim/slim": "^4.12",
+        "monolog/monolog": "^3.4",
+        "slim/psr7": "^1.6",
+        "doctrine/annotations": "^2.0",
+        "swagger-api/swagger-ui": "^5.9"
+    }
+}

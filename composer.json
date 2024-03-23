@@ -1,0 +1,13 @@
+{
+    "name": "pswag/pswag",
+    "autoload": {
+        "psr-4": {
+            "PSwag\\": "src/"
+        }
+    },
+    "require": {
+        "slim/slim": "^4.12",
+        "swagger-api/swagger-ui": "^5.9",
+        "doctrine/annotations": "^2.0"
+    }
+}
