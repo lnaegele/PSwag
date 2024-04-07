@@ -184,12 +184,12 @@ class RequestHandler
             if (array_key_exists($key, $providedPropertyValues)) {
 
                 // this variable value is provided as path variable it needs to be converted from string
-                if (array_key_exists($key, $pathVariableKeys)) {
+                if (in_array($key, $pathVariableKeys)) {
                     $rawProvidedPropertyValue = $expectedType->parse($providedPropertyValues[$key]);
                 } else {
                     $rawProvidedPropertyValue = $providedPropertyValues[$key];
                 }
-                
+
                 $providedPropertyValue = $this->mapValueToTypeSchemaValue($request, $rawProvidedPropertyValue, $expectedType);
             }
 

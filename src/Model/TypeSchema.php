@@ -56,7 +56,8 @@ class TypeSchema
             throw new Exception("From string conversion is not provided for type " . $this->type . ".");
         }
 
-        return $this->parserFunc($value);
+        $fun = $this->parserFunc;
+        return $fun($value);
     }
 
     public function __toString()
