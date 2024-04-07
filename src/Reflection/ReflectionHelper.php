@@ -179,20 +179,20 @@ class ReflectionHelper
             case 'void':
                 return new TypeSchema('void', false, $isRequired);
             case \bool::class:
-                return new TypeSchema('boolean', false, $isRequired);
+                return new TypeSchema('boolean', false, $isRequired, null, null, function(string $value) { return $value=="true" || $value==1 || $value===true; });
             case \byte::class:
             case \sbyte::class:
             case \char::class:
             case \string::class:
-                return new TypeSchema('string', false, $isRequired);
+                return new TypeSchema('string', false, $isRequired, null, null, function(string $value) { return $value; });
             case \float::class:
-                return new TypeSchema('number', false, $isRequired, 'float');
+                return new TypeSchema('number', false, $isRequired, 'float', null, function(string $value) { return floatval($value); });
             case \double::class:
-                return new TypeSchema('number', false, $isRequired, 'double');
+                return new TypeSchema('number', false, $isRequired, 'double', null, function(string $value) { return doubleval($value); });
             case \int::class:
-                return new TypeSchema('integer', false, $isRequired, 'int32');
+                return new TypeSchema('integer', false, $isRequired, 'int32', null, function(string $value) { return intval($value); });
             case \long::class:
-                return new TypeSchema('integer', false, $isRequired, 'int64');
+                return new TypeSchema('integer', false, $isRequired, 'int64', null, function(string $value) { return +$value; });
         }
 
         /*

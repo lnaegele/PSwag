@@ -2,6 +2,8 @@
 declare(strict_types=1);
 namespace PSwag\Model;
 
+use Exception;
+
 class TypeSchema
 {
     /**
@@ -10,13 +12,16 @@ class TypeSchema
      * @param bool $isRequired
      * @param ?string $format
      * @param ?TypeSchema $arraySubTypeSchema
+     * @param $parserFunc
      */
     function __construct(
         private string $type,
         private bool $isCustomDto,
         private bool $isRequired,
         private ?string $format = null,
-        private ?TypeSchema $arraySubTypeSchema = null) {}
+        private ?TypeSchema $arraySubTypeSchema = null,
+        private $parserFunc = null,
+    ) {}
 
     public function getType(): string {
         return $this->type;
@@ -44,6 +49,14 @@ class TypeSchema
 
     public function isArray(): bool {
         return $this->type === 'array';
+    }
+
+    public function parse(string $value): mixed {
+        if ($this->parserFunc==null) {
+            throw new Exception("From string conversion is not provided for type " . $this->type . ".");
+        }
+
+        return $this->parserFunc($value);
     }
 
     public function __toString()

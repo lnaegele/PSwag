@@ -34,9 +34,11 @@ class RequestHandler
     private function routeToAppService(ServerRequestInterface $request, ResponseInterface $response, array $parameterValues, array $pathVariables) : ResponseInterface
     {
         // union of parameter values and path variables
+        $pathVariableKeys = [];
         foreach ($pathVariables as $key => $value) {
             if (array_key_exists($key, $parameterValues)) throw new \Exception('Value for \'' . $key . '\' is both provided as path variable and as query/body variable.');
             $parameterValues[$key] = $value;
+            $pathVariableKeys[] = $key;
         }
 
         $className = $this->endpoint->getApplicationServiceClass();
@@ -51,11 +53,11 @@ class RequestHandler
         {
             // only one parameter and not a simple type => DTO
             //$className = $properties[0]->getTypeSchema()->getType();
-            $args = [$this->createDtoFromValues($request, $properties[0]->getTypeSchema(), $parameterValues)];
+            $args = [$this->createDtoFromValues($request, $properties[0]->getTypeSchema(), $parameterValues, $pathVariableKeys)];
         }
         else
         {
-            $args = $this->getCheckedArguments($request, $properties, $parameterValues);
+            $args = $this->getCheckedArguments($request, $properties, $parameterValues, $pathVariableKeys);
         }
 
         ob_start();
@@ -119,7 +121,12 @@ class RequestHandler
         return $propertyValues;
     }
     
-    private function createDtoFromValues(ServerRequestInterface $request, TypeSchema $typeSchema, array $propertyValues): object
+    /**
+     * Create a DTO object with defined values
+     * @param string[] $pathVariableKeys the names of all variables that are provided inside path
+     * @return object the instantiated DTO
+     */
+    private function createDtoFromValues(ServerRequestInterface $request, TypeSchema $typeSchema, array $propertyValues, array $pathVariableKeys): object
     {
         $fullyQualifiedClassName = $typeSchema->getType();
         if ($propertyValues==null) {
@@ -129,7 +136,7 @@ class RequestHandler
 
         // read properties of Dto
         $properties = $this->reflectionHelper->getPropertiesFromClassProperties($fullyQualifiedClassName, false);
-        $propertyValues = $this->getCheckedArguments($request, $properties, $propertyValues);
+        $propertyValues = $this->getCheckedArguments($request, $properties, $propertyValues, $pathVariableKeys);
         
         $input = $this->reflectionHelper->instantiateClass($fullyQualifiedClassName, false);
         foreach ($propertyValues as $key => $value) {    
@@ -142,9 +149,10 @@ class RequestHandler
     /**
      * Check all required properties are provided and no unexpected property is provided. Also consider path variables of route.
      * @param Property[] $expectedProperties
+     * @param string[] $pathVariableKeys the names of all variables that are provided inside path
      * @return mixed[] map from propery name => value
      */
-    private function getCheckedArguments(ServerRequestInterface $request, array $expectedProperties, array $providedPropertyValues)
+    private function getCheckedArguments(ServerRequestInterface $request, array $expectedProperties, array $providedPropertyValues, array $pathVariableKeys)
     {
         $expectedPropertyNames = [];
         foreach ($expectedProperties as $param) $expectedPropertyNames[] = $param->getName();
@@ -174,7 +182,14 @@ class RequestHandler
     
             $providedPropertyValue = null;
             if (array_key_exists($key, $providedPropertyValues)) {
-                $rawProvidedPropertyValue = $providedPropertyValues[$key];
+
+                // this variable value is provided as path variable it needs to be converted from string
+                if (array_key_exists($key, $pathVariableKeys)) {
+                    $rawProvidedPropertyValue = $expectedType->parse($providedPropertyValues[$key]);
+                } else {
+                    $rawProvidedPropertyValue = $providedPropertyValues[$key];
+                }
+                
                 $providedPropertyValue = $this->mapValueToTypeSchemaValue($request, $rawProvidedPropertyValue, $expectedType);
             }
 
@@ -188,12 +203,12 @@ class RequestHandler
     {
         // if not simple data type but sub DTO => convert
         if ($expectedType->isCustomDto()) {
-            $value = $this->createDtoFromValues($request, $expectedType, $value);
+            $value = $this->createDtoFromValues($request, $expectedType, $value, []);
         }
 
         // if boolean
         if ($expectedType->getType()=="boolean") {
-            $value = $value == "true" || $value == 1;
+            $value = $value == "true" || $value == 1 || $value === true;
         }
 
         // expected parameter is array but provided is flat value?
