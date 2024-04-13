@@ -6,6 +6,7 @@ use Doctrine\Common\Annotations\TokenParser;
 use Psr\Container\ContainerInterface;
 use PSwag\Model\Property;
 use PSwag\Model\TypeSchema;
+use ReflectionEnum;
 
 class ReflectionHelper
 {
@@ -177,22 +178,22 @@ class ReflectionHelper
 
         switch($type) {
             case 'void':
-                return new TypeSchema('void', false, $isRequired);
+                return new TypeSchema('void', false, false, $isRequired);
             case \bool::class:
-                return new TypeSchema('boolean', false, $isRequired, null, null, function(string $value) { return $value=="true" || $value==1 || $value===true; });
+                return new TypeSchema('boolean', false, false, $isRequired, null, null, function(mixed $value) { return $value=="true" || $value==1 || $value===true; });
             case \byte::class:
             case \sbyte::class:
             case \char::class:
             case \string::class:
-                return new TypeSchema('string', false, $isRequired, null, null, function(string $value) { return $value; });
+                return new TypeSchema('string', false, false, $isRequired, null, null, function(mixed $value) { return $value; });
             case \float::class:
-                return new TypeSchema('number', false, $isRequired, 'float', null, function(string $value) { return floatval($value); });
+                return new TypeSchema('number', false, false, $isRequired, 'float', null, function(mixed $value) { return floatval($value); });
             case \double::class:
-                return new TypeSchema('number', false, $isRequired, 'double', null, function(string $value) { return doubleval($value); });
+                return new TypeSchema('number', false, false, $isRequired, 'double', null, function(mixed $value) { return doubleval($value); });
             case \int::class:
-                return new TypeSchema('integer', false, $isRequired, 'int32', null, function(string $value) { return intval($value); });
+                return new TypeSchema('integer', false, false, $isRequired, 'int32', null, function(mixed $value) { return intval($value); });
             case \long::class:
-                return new TypeSchema('integer', false, $isRequired, 'int64', null, function(string $value) { return +$value; });
+                return new TypeSchema('integer', false, false, $isRequired, 'int64', null, function(mixed $value) { return +$value; });
         }
 
         /*
@@ -205,9 +206,13 @@ class ReflectionHelper
         ushort	System.UInt16
         */
 
+        if (enum_exists($type)) {
+            return new TypeSchema($type, true, false, $isRequired, null, null, function(mixed $value) use ($type) { return $type==null ? null : (new ReflectionEnum($type))->getConstant($value); });
+        }
+
         if (str_ends_with($type, "[]")) {
             $arrayType = substr($type, 0, strlen($type)-2);
-            return new TypeSchema('array', false, $isRequired, null, $this->getTypeSchemaFromTypeOrTypeHint($arrayType, false, $providedIn, $ensureOnlySimpleTypes, $definingClass));
+            return new TypeSchema('array', false, false, $isRequired, null, $this->getTypeSchemaFromTypeOrTypeHint($arrayType, false, $providedIn, $ensureOnlySimpleTypes, $definingClass));
         }
 
         if (!$ensureOnlySimpleTypes) {
@@ -215,21 +220,12 @@ class ReflectionHelper
             $useAliases = $this->getUseAliasesFromClass($definingClass);
             $type = array_key_exists(strtolower($type), $useAliases) ? $useAliases[strtolower($type)] : $type;
 
-            // check if class can be loaded (needed in order to have classes autoloaded before calling get_declared_classes)
-            try {
-                if ($this->container != null) $this->container->get($type);
-            } catch (\Exception $e) {
-                // ignore exceptions, we just want the class to be loaded even if it is not resolvable successfully
-            }
+            // load class if not already loaded
+            $this->ensureClassLoaded($type);
 
             foreach (get_declared_classes() as $className) {
                 if ($className === $type) {
-                    if ($this->isEnumClass($className)) {
-                        return new TypeSchema('string', false, $isRequired, null); // enums are always exchanged as string // TODO: encode enum options in swagger?
-                    }
-                    else {
-                        return new TypeSchema($type, true, $isRequired);
-                    }
+                    return new TypeSchema($type, false, true, $isRequired);
                 }
             }
         }
@@ -237,17 +233,17 @@ class ReflectionHelper
         throw new \Exception($providedIn . ' is of type \'' . $type . '\' but this type can not be mapped. Please make sure the type is correctly specified, e.g. by annotations, and that class definition is properly included when not using dependency injection.');
     }
 
-    private static function checkPublicOrProtectedModifier(\ReflectionProperty $property, string $providedIn): void {
-        if (!$property->isPublic() && !$property->isProtected()) throw new \Exception($providedIn . ' needs to be either protected or public.');
+    private function ensureClassLoaded($type): void {
+        // check if class can be loaded (needed in order to have classes autoloaded before calling get_declared_classes)
+        try {
+            if ($this->container != null) $this->container->get($type);
+        } catch (\Exception $e) {
+            // ignore exceptions, we just want the class to be loaded even if it is not resolvable successfully
+        }
     }
 
-    private static function isEnumClass(string $class): bool {
-        try {
-            new \ReflectionEnum($class);
-            return true;
-        } catch (\Exception) {
-            return false;
-        }
+    private static function checkPublicOrProtectedModifier(\ReflectionProperty $property, string $providedIn): void {
+        if (!$property->isPublic() && !$property->isProtected()) throw new \Exception($providedIn . ' needs to be either protected or public.');
     }
 
     /**

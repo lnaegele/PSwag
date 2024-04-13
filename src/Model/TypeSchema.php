@@ -8,6 +8,7 @@ class TypeSchema
 {
     /**
      * @param string $type
+     * @param bool $isEnum
      * @param bool $isCustomDto
      * @param bool $isRequired
      * @param ?string $format
@@ -16,6 +17,7 @@ class TypeSchema
      */
     function __construct(
         private string $type,
+        private bool $isEnum,
         private bool $isCustomDto,
         private bool $isRequired,
         private ?string $format = null,
@@ -25,6 +27,11 @@ class TypeSchema
 
     public function getType(): string {
         return $this->type;
+    }
+
+
+    public function isEnum(): bool {
+        return $this->isEnum;
     }
 
     public function isCustomDto(): bool {
@@ -51,9 +58,9 @@ class TypeSchema
         return $this->type === 'array';
     }
 
-    public function parse(string $value): mixed {
+    public function parse(mixed $value): mixed {
         if ($this->parserFunc==null) {
-            throw new Exception("From string conversion is not provided for type " . $this->type . ".");
+            return $value;
         }
 
         $fun = $this->parserFunc;

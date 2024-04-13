@@ -52,7 +52,6 @@ class RequestHandler
         if (count($properties)==1 && $properties[0]->getTypeSchema()->isCustomDto())
         {
             // only one parameter and not a simple type => DTO
-            //$className = $properties[0]->getTypeSchema()->getType();
             $args = [$this->createDtoFromValues($request, $properties[0]->getTypeSchema(), $parameterValues, $pathVariableKeys)];
         }
         else
@@ -128,13 +127,13 @@ class RequestHandler
      */
     private function createDtoFromValues(ServerRequestInterface $request, TypeSchema $typeSchema, array $propertyValues, array $pathVariableKeys): object
     {
-        $fullyQualifiedClassName = $typeSchema->getType();
         if ($propertyValues==null) {
             if (!$typeSchema->isRequired()) return null;
             $propertyValues = [];
         }
-
+        
         // read properties of Dto
+        $fullyQualifiedClassName = $typeSchema->getType();
         $properties = $this->reflectionHelper->getPropertiesFromClassProperties($fullyQualifiedClassName, false);
         $propertyValues = $this->getCheckedArguments($request, $properties, $propertyValues, $pathVariableKeys);
         
@@ -201,16 +200,6 @@ class RequestHandler
 
     private function mapValueToTypeSchemaValue(ServerRequestInterface $request, mixed $value, TypeSchema $expectedType): mixed
     {
-        // if not simple data type but sub DTO => convert
-        if ($expectedType->isCustomDto()) {
-            $value = $this->createDtoFromValues($request, $expectedType, $value, []);
-        }
-
-        // if boolean
-        if ($expectedType->getType()=="boolean") {
-            $value = $value == "true" || $value == 1 || $value === true;
-        }
-
         // expected parameter is array but provided is flat value?
         if ($expectedType->isArray()) {
             if (!is_array($value)) $value = array($value);
@@ -222,6 +211,16 @@ class RequestHandler
                 $_result[] = $this->mapValueToTypeSchemaValue($request, $value, $expectedType->getArraySubTypeSchema());
             }
             $value = $_result;
+        }
+
+        // if not simple data type but sub DTO => convert
+        else if ($expectedType->isCustomDto()) {
+            $value = $this->createDtoFromValues($request, $expectedType, $value, []);
+        }
+
+        // convert enums from string, booleans from string, path vars (e.g. numbers) from string
+        else {
+            $value = $expectedType->parse($value);
         }
 
         return $value;

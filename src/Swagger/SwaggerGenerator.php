@@ -231,10 +231,12 @@ class SwaggerGenerator
 
     private function getSchema(TypeSchema $typeSchema, array &$schemaDefinitions, $preventSchemaRef = false): ?array
     {
-        if ($typeSchema->isCustomDto() && !$preventSchemaRef) {
+        if (($typeSchema->isEnum() || $typeSchema->isCustomDto()) && !$preventSchemaRef) {
             return [
                 "\$ref" => $this->createObjectSchemaFromTypeSchemaIfNeededAndReturnRef($typeSchema, $schemaDefinitions)
             ];
+        } else if ($typeSchema->isEnum() && $preventSchemaRef) {
+            return $this->createObjectSchemaFromEnum($typeSchema->getType(), $schemaDefinitions);
         } else if ($typeSchema->isCustomDto() && $preventSchemaRef) {
             $properties = $this->reflectionHelper->getPropertiesFromClassProperties($typeSchema->getType(), false);
             return $this->createObjectSchemaFromDtoProperties($properties, $schemaDefinitions);
@@ -245,11 +247,23 @@ class SwaggerGenerator
                 "type" => $typeSchema->getType()
             ];
             if ($typeSchema->getFormat()) $schema["format"] = $typeSchema->getFormat();
-            if ($typeSchema->getArraySubTypeSchema()) {
+            if ($typeSchema->getArraySubTypeSchema() != null) {
                 $schema["items"] = $this->getSchema($typeSchema->getArraySubTypeSchema(), $schemaDefinitions);
             }
             return $schema;
         }
+    }
+
+    /**
+     * @param string $type Enum type
+     * @param array $schemaDefinitions
+     * @return ?array
+     */
+    private function createObjectSchemaFromEnum(string $type, array &$schemaDefinitions): ?array {
+        return [
+            "type" => 'string',
+            "enum" => array_map(function($enum) { return $enum->name; }, ($type::cases())),
+        ];
     }
 
     /**
@@ -289,8 +303,15 @@ class SwaggerGenerator
             // First setup $schemaDefinitions in order to support Dto recursivness
             $schemaDefinitions["types"][$simpleName] = $hash;
 
-            $properties = $this->reflectionHelper->getPropertiesFromClassProperties($typeSchema->getType(), false);
-            $schemaDefinition = $this->createObjectSchemaFromDtoProperties($properties, $schemaDefinitions);
+            if ($typeSchema->isEnum()) {
+                $schemaDefinition = $this->createObjectSchemaFromEnum($typeSchema->getType(), $schemaDefinitions);
+            } else if ($typeSchema->isCustomDto()) {
+                $properties = $this->reflectionHelper->getPropertiesFromClassProperties($typeSchema->getType(), false);
+                $schemaDefinition = $this->createObjectSchemaFromDtoProperties($properties, $schemaDefinitions);
+            } else {
+                throw new \Exception("Can not create object definition for type '" . $typeSchema->getType() . "'.");
+            }
+
             $schemaDefinitions["definitions"][$simpleName] = $schemaDefinition;
         }
         else if ($schemaDefinitions["types"][$simpleName] !== $hash) {
