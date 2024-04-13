@@ -16,7 +16,7 @@ $slimApp = AppFactory::create();
 $app = new PSwagApp($slimApp);
 
 // this is important to make swagger UI work
-$app->setBasePath('/pswag/example/index.php');
+$app->setBasePath('/PSwag/example/index.php');
 
 // add routing middleware first, otherwise it would try to resolve route before swagger middleware can react
 $app->addRoutingMiddleware();

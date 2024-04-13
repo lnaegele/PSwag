@@ -70,7 +70,12 @@ class SwaggerGenerator
         $isQueryRequest = in_array($endpoint->getMethod(), ['GET', 'DELETE']);
         $properties = $this->reflectionHelper->getPropertiesFromMethodParameters($endpoint->getApplicationServiceClass(), $endpoint->getApplicationServiceMethod(), $isQueryRequest);
         if ($isQueryRequest) {
-            // TODO: consider only one parameter but of type DTO!
+            // If there is only one single property and it is of custom dto type, overwrite $properties with its properties
+            if (count($properties) == 1 && $properties[0]->getTypeSchema()->isCustomDto()) {
+                $typeSchema = $properties[0]->getTypeSchema();
+                $properties = $this->reflectionHelper->getPropertiesFromClassProperties($typeSchema->getType(), false);
+            }
+            
             foreach ($properties as $p) {
                 // ignore this property as it will later be considered in path variables
                 $typeSchema = $p->getTypeSchema();
@@ -236,7 +241,7 @@ class SwaggerGenerator
                 "\$ref" => $this->createObjectSchemaFromTypeSchemaIfNeededAndReturnRef($typeSchema, $schemaDefinitions)
             ];
         } else if ($typeSchema->isEnum() && $preventSchemaRef) {
-            return $this->createObjectSchemaFromEnum($typeSchema->getType(), $schemaDefinitions);
+            return $this->createObjectSchemaFromEnum($typeSchema->getType());
         } else if ($typeSchema->isCustomDto() && $preventSchemaRef) {
             $properties = $this->reflectionHelper->getPropertiesFromClassProperties($typeSchema->getType(), false);
             return $this->createObjectSchemaFromDtoProperties($properties, $schemaDefinitions);
@@ -256,10 +261,9 @@ class SwaggerGenerator
 
     /**
      * @param string $type Enum type
-     * @param array $schemaDefinitions
      * @return ?array
      */
-    private function createObjectSchemaFromEnum(string $type, array &$schemaDefinitions): ?array {
+    private function createObjectSchemaFromEnum(string $type): ?array {
         return [
             "type" => 'string',
             "enum" => array_map(function($enum) { return $enum->name; }, ($type::cases())),
@@ -304,7 +308,7 @@ class SwaggerGenerator
             $schemaDefinitions["types"][$simpleName] = $hash;
 
             if ($typeSchema->isEnum()) {
-                $schemaDefinition = $this->createObjectSchemaFromEnum($typeSchema->getType(), $schemaDefinitions);
+                $schemaDefinition = $this->createObjectSchemaFromEnum($typeSchema->getType());
             } else if ($typeSchema->isCustomDto()) {
                 $properties = $this->reflectionHelper->getPropertiesFromClassProperties($typeSchema->getType(), false);
                 $schemaDefinition = $this->createObjectSchemaFromDtoProperties($properties, $schemaDefinitions);
