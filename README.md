@@ -16,7 +16,6 @@ Easily create a REST API for your PHP functions - same way as you might know fro
 1. Edit your composer.json and add following:
 ```json
 "require": {
-    "...": "...",
     "pswag/pswag": "dev-main"
 },
 "repositories": [
