@@ -9,6 +9,22 @@ Easily create a REST API for your PHP functions - like you might know from .NET 
 - It supports GET, PUT, DELETE, PATCH, POST
 - It supports PHP inbuilt types, enums, custom classes, arrays (of both, inbuilt and custom types), nullables
 
+## How to use with Composer
+1. Edit your composer.json and add following:
+```json
+"require": {
+    "...": "...",
+    "pswag/pswag": "dev-main"
+},
+"repositories": [
+    {
+        "type": "vcs",
+        "url": "https://github.com/lnaegele/PSwag.git"
+    }
+]
+```
+2. Execute ```composer install``` in terminal.
+
 ## Example
 Let's create an example for a Petstore. To specify an endpoint for our REST API, we first create a method  ```getPetById``` that takes an id and returns an object of type ```Pet```.
 ```php
