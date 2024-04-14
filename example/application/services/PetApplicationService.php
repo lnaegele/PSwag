@@ -3,6 +3,7 @@ namespace PSwag\Example\Application\Services;
 
 use PSwag\Example\Application\Dtos\Category;
 use PSwag\Example\Application\Dtos\Pet;
+use PSwag\Example\Application\Dtos\Tag;
 
 class PetApplicationService
 {
@@ -12,13 +13,7 @@ class PetApplicationService
      * @return Pet Returns a single pet
      */
     public function getPetById(int $petId): Pet {
-        return new Pet(
-            1,
-            new Category(1, 'Category 1'),
-            'Moritz',
-            [],
-            [],
-            'Status 1'
+        return new Pet(10, 'doggie', new Category(1, 'Dog'), ['photo1.jpg'], [new Tag(0, 'cute')], 'available'
         );
     }
 

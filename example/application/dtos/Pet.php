@@ -7,9 +7,9 @@ class Pet
 {
     public ?int $id;
 
-    public ?Category $category;
-    
     public string $name;
+
+    public ?Category $category;
     
     /** @var string[] $photoUrls */
     public array $photoUrls;

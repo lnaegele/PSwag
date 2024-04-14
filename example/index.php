@@ -16,13 +16,14 @@ $slimApp = AppFactory::create();
 $app = new PSwagApp($slimApp);
 
 // this is important to make swagger UI work
-$app->setBasePath('/PSwag/example/index.php');
+$isRewritingEnabled = false;
+$app->setBasePath(substr($_SERVER['SCRIPT_NAME'], 0, strlen($_SERVER['SCRIPT_NAME']) - ($isRewritingEnabled ? strlen('/index.php') : 0)));
 
 // add routing middleware first, otherwise it would try to resolve route before swagger middleware can react
 $app->addRoutingMiddleware();
 
 // add swagger middleware: specify url pattern under which swagger UI shall be accessbile, and provide relative path to swagger ui dist.
-$app->addSwaggerUiMiddleware('/swagger', 'PSwag example', '1.0.0', 'vendor/swagger-api/swagger-ui/dist/');
+$app->addSwaggerUiMiddleware('/', 'PSwag example', '1.0.0', 'vendor/swagger-api/swagger-ui/dist/');
 
 // register endpoints by specifying class and method name
 $app->get('/pet/{petId}', [PetApplicationService::class, 'getPetById']);
