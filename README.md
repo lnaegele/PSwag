@@ -2,6 +2,8 @@
 
 Easily create a REST API for your PHP functions - same way as you might know from ABP framework's application services - without the need to juggle with Requests and Responses anymore. All you need to do is providing proper type definitions for method parameters and return types of your endpoint functions.
 
+While many api-first approaches exist that generate server-side code from a predefined OpenAPI specification, or derive this from a proprietary documentation as extension to code, the project PSwag aims at code-first and auto generation (on the fly) of swagger endpoints by relying on code directly that just needs to be properly typed.
+
 ## PSwag is an extension (wrapper) to Slim
 - It automatically maps your custom method signatures to REST API endpoints
 - It provides an always-up-to-date OpenAPI 3.0 specification of your REST API endpoints
