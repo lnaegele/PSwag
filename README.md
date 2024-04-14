@@ -98,7 +98,9 @@ $app->run();
 ?>
 ```
 
-And this is what we'll finally get when calling index.php:
+You see that in GET and DELETE endpoints path variables are used. When specified, PSwag tries to automatically map them to method parameters of target function having the same name. If there isn't, it will add an additional input of type string to swagger - however, its value will never be passed to target function then.
+
+When calling index.php, this is what we'll finally get:
 
 ![image](https://github.com/lnaegele/PSwag/assets/2114595/14c56bb3-196a-456b-8607-8892a23aaa0d)
 
