@@ -8,6 +8,7 @@ Easily create a REST API for your PHP functions - same way as you might know fro
 - It embeds Swagger UI
 - It supports GET, PUT, DELETE, PATCH, POST
 - It supports PHP inbuilt types, enums, custom classes, arrays (of both, inbuilt and custom types), nullables
+- Code annotations are directly used to show as descriptions in Swagger
 
 ## How to use with Composer
 1. Edit your composer.json and add following:
@@ -97,7 +98,8 @@ $app->run();
 ?>
 ```
 
-And this is what we'll get when calling index.php:
+And this is what we'll finally get when calling index.php:
+
 ![image](https://github.com/lnaegele/PSwag/assets/2114595/14c56bb3-196a-456b-8607-8892a23aaa0d)
 
 That's it! I hope it is useful to you :-)
