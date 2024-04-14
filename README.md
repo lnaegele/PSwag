@@ -81,7 +81,7 @@ $app->run();
 ?>
 ```
 
-And this is what we'll get:
+And this is what we'll get when calling index.php:
 ![image](https://github.com/lnaegele/PSwag/assets/2114595/14c56bb3-196a-456b-8607-8892a23aaa0d)
 
 That's it! I hope it is useful to you :-)
