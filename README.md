@@ -1,6 +1,6 @@
 # PSwag - easily enhance your PHP code with Swagger
 
-Easily create a REST API for your PHP functions - like you might know from .NET application service classes - without Request and Response juggling anymore. All you need to do is providing types for method parameters and return types.
+Easily create a REST API for your PHP functions - same way as you might know from ABP framework's application services - without the need to juggle with Requests and Responses anymore. All you need to do is providing proper type definitions for method parameters and return types of your endpoint functions.
 
 ## PSwag is an extension (wrapper) to Slim
 - It automatically maps your custom method signatures to REST API endpoints
