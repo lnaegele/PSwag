@@ -4,7 +4,7 @@ Easily create a REST API for your PHP functions - same way as you might know fro
 
 While many api-first approaches exist that generate server-side code from a predefined OpenAPI specification, or derive this from a proprietary documentation as extension to code, the project PSwag aims at code-first and auto generation (on the fly) of swagger endpoints by relying on code directly that just needs to be properly typed.
 
-## PSwag is an extension (wrapper) to Slim
+PSwag is an extension to Slim and you can use all functionalities of it. In addition to this, PSwag brings you following benefits:
 - It automatically maps your custom method signatures to REST API endpoints
 - It provides an always-up-to-date OpenAPI 3.0 specification of your REST API endpoints
 - It embeds Swagger UI
@@ -69,7 +69,9 @@ class Pet
 ```
 For ```$photoUrls``` the type ```array``` is not sufficient. In such cases, its unique datatype can be specified as annotation with ```/** @var string[] $photoUrls */```. Now, PSwag knows how to use it for endpoints. Same applies to ```$tags```, but in addition there is a custom class used as array.
 
-IMPORTANT: When not in the same namespace as ```Pet```, class ```Tag``` must be referenced with fully qualified namespace in order to be resolvable by PSwag.
+Please note:
+- When not in the same namespace as ```Pet```, class ```Tag``` must be referenced with fully qualified namespace in order to be resolvable by PSwag.
+- If your model contains data fields that are not meant to be exposed, or inherited classes contain properties that are not sufficient to be converted to an OpenAPI specification, it is considered best practice to create a dedicated dto (data transfer object) class that contains intentional properties only, to use this dto type in API signature instead and to map between your model and this dto type.
 
 Finally, create a Slim application in index.php and register method ```getPetById``` to it:
 
