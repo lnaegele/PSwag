@@ -20,18 +20,22 @@ class RequestHandler
 
     public function execute(ServerRequestInterface $request, ResponseInterface $response, array $pathVariables) : ResponseInterface
     {
-        if (in_array($this->endpoint->getMethod(), ['GET', 'DELETE'])) {
+        $method = $request->getMethod();
+        if (!in_array($method, $this->endpoint->getMethods()) || !in_array($method, ['GET', 'DELETE', 'POST', 'PUT', 'PATCH'])) {
+            throw new HttpBadRequestException($request, "Unsupported method '" . $method . "'.");
+        }
+
+        if (in_array($method, ['GET', 'DELETE'])) {
             $parameters = $this->getParameterValuesFromQuery();
-            return $this->routeToAppService($request, $response, $parameters, $pathVariables);
+            return $this->routeToAppService($request, $response, $parameters, $pathVariables, true);
         }
-        else if (in_array($this->endpoint->getMethod(), ['POST', 'PUT', 'PATCH'])) {
+        else if (in_array($method, ['POST', 'PUT', 'PATCH'])) {
             $parameters = $this->getParameterValuesFromBody();
-            return $this->routeToAppService($request, $response, $parameters, $pathVariables);
+            return $this->routeToAppService($request, $response, $parameters, $pathVariables, false);
         }
-        else throw new HttpBadRequestException($request, "Unsupported method '" . $this->endpoint->getMethod() . "'.");
     }
     
-    private function routeToAppService(ServerRequestInterface $request, ResponseInterface $response, array $parameterValues, array $pathVariables) : ResponseInterface
+    private function routeToAppService(ServerRequestInterface $request, ResponseInterface $response, array $parameterValues, array $pathVariables, bool $isQueryRequest) : ResponseInterface
     {
         // union of parameter values and path variables
         $pathVariableKeys = [];
@@ -43,8 +47,6 @@ class RequestHandler
 
         $className = $this->endpoint->getApplicationServiceClass();
         $methodName = $this->endpoint->getApplicationServiceMethod();
-
-        $isQueryRequest = in_array($this->endpoint->getMethod(), ['GET', 'DELETE']);
         $properties = $this->reflectionHelper->getPropertiesFromMethodParameters($className, $methodName, $isQueryRequest);
         
         // get method argument names
