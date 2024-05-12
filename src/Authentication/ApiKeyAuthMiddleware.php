@@ -15,23 +15,23 @@ abstract class ApiKeyAuthMiddleware implements AuthMiddlewareInterface
 
     public abstract function getIn(): ApiKeyInType;
 
-    public abstract function isAuthTokenValid(string $authToken): bool;
+    public abstract function isApiKeyValid(string $apiKey): bool;
 
     public final function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface {
-        $authToken = match ($this->getIn()) {
-            ApiKeyInType::Header => $this->getAuthTokenFromHeader($request),
-            ApiKeyInType::Cookie => $this->getAuthTokenFromCookie($request),
-            ApiKeyInType::Query => $this->getAuthTokenFromQuery($request),
+        $apiKey = match ($this->getIn()) {
+            ApiKeyInType::Header => $this->getApiKeyFromHeader($request),
+            ApiKeyInType::Cookie => $this->getApiKeyFromCookie($request),
+            ApiKeyInType::Query => $this->getApiKeyFromQuery($request),
         };
 
-        if ($authToken == null || !$this->isAuthTokenValid($authToken)) {
+        if ($apiKey == null || !$this->isApiKeyValid($apiKey)) {
             return new Response(StatusCodeInterface::STATUS_UNAUTHORIZED);
         }
         
         return $handler->handle($request);
     }
 
-    private function getAuthTokenFromHeader(ServerRequestInterface $request): ?string
+    private function getApiKeyFromHeader(ServerRequestInterface $request): ?string
     {
         $headers = $request->getHeader($this->getName());
         foreach ($headers as $header) {
@@ -41,7 +41,7 @@ abstract class ApiKeyAuthMiddleware implements AuthMiddlewareInterface
         return null;
     }
 
-    private function getAuthTokenFromCookie(ServerRequestInterface $request): ?string
+    private function getApiKeyFromCookie(ServerRequestInterface $request): ?string
     {
         $cookieName = $this->getName();
         $cookieParams = $request->getCookieParams();
@@ -52,7 +52,7 @@ abstract class ApiKeyAuthMiddleware implements AuthMiddlewareInterface
         return null;
     }
 
-    private function getAuthTokenFromQuery(ServerRequestInterface $request): ?string
+    private function getApiKeyFromQuery(ServerRequestInterface $request): ?string
     {
         $paramName = $this->getName();
         $queryParams = $request->getQueryParams();

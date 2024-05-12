@@ -11,21 +11,21 @@ use Slim\Psr7\Response;
 
 abstract class BearerAuthMiddleware implements AuthMiddlewareInterface
 {
-    public abstract function isAuthTokenValid(string $authToken): bool;
-
     public abstract function getBearerFormat(): ?string;
+    
+    public abstract function isBearerTokenValid(string $bearerToken): bool;
 
     public final function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface {
-        $authToken = $this->getAuthTokenFromRequest($request);
+        $bearerToken = $this->getBearerTokenFromRequest($request);
 
-        if ($authToken == null || !$this->isAuthTokenValid($authToken)) {
+        if ($bearerToken == null || !$this->isBearerTokenValid($bearerToken)) {
             return new Response(StatusCodeInterface::STATUS_UNAUTHORIZED);
         }
         
         return $handler->handle($request);
     }
 
-    private function getAuthTokenFromRequest(ServerRequestInterface $request): ?string
+    private function getBearerTokenFromRequest(ServerRequestInterface $request): ?string
     {
         $headers = $request->getHeader("Authorization");
         foreach ($headers as $header) {
