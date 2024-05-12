@@ -1,4 +1,4 @@
-# PSwag - easily enhance your PHP code with Swagger
+# PSwag - code-first REST API and Swagger generation for PHP
 
 Easily create a REST API for your PHP functions - same way as you might know from ABP framework's application services - without the need to juggle with Requests and Responses anymore. All you need to do is providing proper type definitions for method parameters and return types of your endpoint functions.
 
