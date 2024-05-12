@@ -100,11 +100,16 @@ $app->run();
 ?>
 ```
 
-In this example, path variables are used for GET and DELETE endpoints. When specified, PSwag tries to automatically map path variables to method parameters of target method by name. If there isn't, it will add an additional input of type string to swagger - however, its value will never be passed to target function then.
-
 When calling index.php/swagger, this is what we'll finally get:
 
 ![image](https://github.com/lnaegele/PSwag/assets/2114595/14c56bb3-196a-456b-8607-8892a23aaa0d)
+
+## Path variables
+
+In above example, path variables are used for GET and DELETE endpoints. When specified, PSwag tries to automatically map path variables to parameters of the target method by searching for the same variable name. When executing the endpoint, the value for this path variable will be passed to the method parameter with that same name. If there isn't such a parameter, the value will actually be ignored and not passed to the method.
+
+Swagger UI shows dedicated input fields for path variables. Because original data fields (query params or dto properties) would be duplicated with parameter mapping mentioned above, PSwag removes them from original data fields. Example: Endpoint ```/pet/{petId}``` uses value provided for path variable ```petId``` as value for method parameter ```int $petId```, and there will be no additional input field for it anymore.
+PSwag tries to automatically derive the value type from the method signature (in this example ```int```) and will set it as type for its corresponding path variable.
 
 ## Authentication
 
