@@ -82,32 +82,25 @@ use PSwag\PSwagApp;
 use PSwag\Example\Application\Services\PetApplicationService;
 use Slim\Factory\AppFactory;
 
-// if you use dependency injection, PSwag does class loading for you. If you do not use DI, you must ensure to include all dtos explicitly. E.g.: require_once('application/dtos/Pet.php');
-AppFactory::setContainer(new Container());
+AppFactory::setContainer(new Container()); // if you use dependency injection, PSwag does class loading for you. If you do not use DI, you must ensure to include all dtos explicitly. E.g.: require_once('application/dtos/Pet.php');
 $slimApp = AppFactory::create();
-
-// create wrapper PSwagApp
-$app = new PSwagApp($slimApp);
-
-// add routing middleware first, otherwise it would try to resolve route before swagger middleware can react
-$app->addRoutingMiddleware();
-
-// add swagger middleware: specify url pattern under which swagger UI shall be accessibile, and provide relative path to swagger ui dist.
-$app->addSwaggerUiMiddleware('/', 'PSwag example', '1.0.0', 'vendor/swagger-api/swagger-ui/dist/');
+$app = new PSwagApp($slimApp); // create wrapper PSwagApp
+$app->addRoutingMiddleware(); // add routing middleware first, otherwise it would try to resolve route before swagger middleware can react
+$app->addSwaggerUiMiddleware('/swagger', 'PSwag example', '1.0.0', 'vendor/swagger-api/swagger-ui/dist/'); // add swagger middleware: specify url pattern under which swagger UI shall be accessibile, and provide relative path to swagger ui dist.
 
 // register endpoints by specifying class and method name
 $app->get('/pet/{petId}', [PetApplicationService::class, 'getPetById']);
 $app->delete('/pet/{petId}', [PetApplicationService::class, 'deletePetById']);
 $app->post('/pet', [PetApplicationService::class, 'createNewPet']);
 $app->put('/pet', [PetApplicationService::class, 'updatePetById']);
-
+$app->redirect('', './index.php/swagger'); // redirect root to swagger UI
 $app->run();
 ?>
 ```
 
 In this example, path variables are used for GET and DELETE endpoints. When specified, PSwag tries to automatically map path variables to method parameters of target method by name. If there isn't, it will add an additional input of type string to swagger - however, its value will never be passed to target function then.
 
-When calling index.php, this is what we'll finally get:
+When calling index.php/swagger, this is what we'll finally get:
 
 ![image](https://github.com/lnaegele/PSwag/assets/2114595/14c56bb3-196a-456b-8607-8892a23aaa0d)
 
