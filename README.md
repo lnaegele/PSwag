@@ -13,6 +13,7 @@ While many api-first approaches exist that generate server-side code from a pred
 - Code annotations are directly used to show as descriptions in Swagger
 - When calling a REST endpoint, the request is automatically transformed and mapped PHP method is invoked
 - The return result of PHP method is automatically transformed to REST result and returned to endpoint caller
+- Authentication is supported for BasicAuth, Bearer and API Keys
 
 ## How to use with Composer
 1. Edit your composer.json and add following:
