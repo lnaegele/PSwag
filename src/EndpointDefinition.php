@@ -2,20 +2,52 @@
 declare(strict_types=1);
 namespace PSwag;
 
+use PSwag\Interfaces\AuthMiddlewareInterface;
+
 class EndpointDefinition {
+
+    /** @var AuthMiddlewareInterface[] $authMiddlewares */
+    private array $authMiddlewares = [];
 
     public function __construct(
         private string $pattern,
-        private string $method,
+        /** @var string[] $methods */
+        private array $methods,
         private string $applicationServiceClass,
-        private string $applicationServiceMethod) {}
+        private string $applicationServiceMethod,
+    ) {}
+
+    public function addAuthMiddleware(AuthMiddlewareInterface $middleware): void {
+        $this->authMiddlewares[] = $middleware;
+    }
+
+    /**
+     * @return AuthMiddlewareInterface[]
+     */
+    public function getAuthMiddlewares(): array {
+        return $this->authMiddlewares;
+    }
     
     public function getPattern(): string {
         return $this->pattern;
     }
     
-    public function getMethod(): string {
-        return $this->method;
+    public function setPattern(string $pattern): void {
+        $this->pattern = $pattern;
+    }
+    
+    /**
+     * @return string[]
+     */
+    public function getMethods(): array {
+        return $this->methods;
+    }
+    
+    /**
+     * @param string[] $methods
+     */
+    public function setMethods($methods): void {
+        $this->methods = $methods;
     }
 
     public function getApplicationServiceClass():string {

@@ -2,6 +2,7 @@
 declare(strict_types=1);
 namespace PSwag\Swagger;
 
+use Exception;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -59,6 +60,9 @@ class SwaggerUiMiddleware implements MiddlewareInterface
             if ($route == $pathPrefix . '/swagger.json') {
                 $swaggerJson = $this->swaggerGenerator->generate($this->applicationName, $this->version, $basePath);
                 $resultJson = json_encode($swaggerJson, JSON_UNESCAPED_SLASHES);
+                if ($resultJson===false) {
+                    throw new Exception("Can not generate JSON from prepared swagger configuration.");
+                }
                 return $this->createResponseFromStringContent($resultJson, 'application/json; charset=utf-8');
             }
 

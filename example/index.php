@@ -3,6 +3,8 @@ chdir(__DIR__);
 require_once "vendor\\autoload.php";
 
 use DI\Container;
+use PSwag\Example\Application\Middlewares\ApiKeyAuthMiddleware;
+use PSwag\Example\Application\Middlewares\BasicAuthMiddleware;
 use PSwag\PSwagApp;
 use PSwag\Example\Application\Services\PetApplicationService;
 use Slim\Factory\AppFactory;
@@ -26,8 +28,8 @@ $app->addRoutingMiddleware();
 $app->addSwaggerUiMiddleware('/', 'PSwag example', '1.0.0', 'vendor/swagger-api/swagger-ui/dist/');
 
 // register endpoints by specifying class and method name
-$app->get('/pet/{petId}', [PetApplicationService::class, 'getPetById']);
-$app->delete('/pet/{petId}', [PetApplicationService::class, 'deletePetById']);
+$app->get('/pet/{petId}', [PetApplicationService::class, 'getPetById'])->addMiddleware(new ApiKeyAuthMiddleware());
+$app->delete('/pet/{petId}', [PetApplicationService::class, 'deletePetById'])->addMiddleware(new BasicAuthMiddleware());
 $app->post('/pet', [PetApplicationService::class, 'createNewPet']);
 $app->put('/pet', [PetApplicationService::class, 'updatePetById']);
 
