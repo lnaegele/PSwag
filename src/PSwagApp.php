@@ -8,6 +8,7 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Log\LoggerInterface;
+use PSwag\Model\RouteWrapper;
 use PSwag\Reflection\ReflectionHelper;
 use PSwag\Swagger\SwaggerUiMiddleware;
 use Slim\App;
@@ -38,7 +39,7 @@ class PSwagApp implements RouteCollectorProxyInterface
      */
     public function addSwaggerUiMiddleware(string $pattern, string $applicationName, string $version, string $pathToSwaggerUiDist): SwaggerUiMiddleware
     {
-        $swaggerUiMiddleware = new SwaggerUiMiddleware($pattern, $applicationName, $version, $pathToSwaggerUiDist, $this->getResponseFactory(), $this->registry, $this->getRouteCollector(), $this->getContainer());
+        $swaggerUiMiddleware = new SwaggerUiMiddleware($pattern, $applicationName, $version, $pathToSwaggerUiDist, $this->registry, $this->getRouteCollector(), $this->getContainer());
         $this->add($swaggerUiMiddleware);
         return $swaggerUiMiddleware;
     }
@@ -262,16 +263,15 @@ class PSwagApp implements RouteCollectorProxyInterface
             return $this->app->map($methods, $pattern, $callable);
         }
 
-        foreach ($methods as $method) {
-            $endpoint = new EndpointDefinition($pattern, $method,  $callable[0], $callable[1]);
-            $this->registry->register($endpoint);
-        }
+        $endpoint = new EndpointDefinition($pattern, $methods,  $callable[0], $callable[1]);
+        $this->registry->register($endpoint);
 
         $reflectionHelper = new ReflectionHelper($this->getContainer());        
-        return $this->app->map($methods, $pattern, function (ServerRequestInterface $request, ResponseInterface $response, array $pathVariables) use ($endpoint, &$reflectionHelper) {
+        $route = $this->app->map($methods, $pattern, function (ServerRequestInterface $request, ResponseInterface $response, array $pathVariables) use ($endpoint, &$reflectionHelper) {
             $handler = new RequestHandler($endpoint, $reflectionHelper);
             return $handler->execute($request, $response, $pathVariables);
         });
+        return new RouteWrapper($route, $endpoint);
     }
 
     /**
@@ -288,6 +288,7 @@ class PSwagApp implements RouteCollectorProxyInterface
      */
     public function redirect(string $from, $to, int $status = 302): RouteInterface
     {
+        // TODO: implement own swagger logic
         return $this->app->redirect($from, $to, $status);
     }
 }

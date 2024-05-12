@@ -29,7 +29,7 @@ While many api-first approaches exist that generate server-side code from a pred
 ```
 2. Execute ```composer install``` in terminal.
 
-## Example
+## Basic example: Petstore
 Let's create an example for a Petstore. To specify an endpoint for our REST API, first create a method  ```getPetById``` that takes an id and returns an object of type ```Pet```.
 ```php
 class PetApplicationService
@@ -91,7 +91,7 @@ $app = new PSwagApp($slimApp);
 // add routing middleware first, otherwise it would try to resolve route before swagger middleware can react
 $app->addRoutingMiddleware();
 
-// add swagger middleware: specify url pattern under which swagger UI shall be accessbile, and provide relative path to swagger ui dist.
+// add swagger middleware: specify url pattern under which swagger UI shall be accessibile, and provide relative path to swagger ui dist.
 $app->addSwaggerUiMiddleware('/', 'PSwag example', '1.0.0', 'vendor/swagger-api/swagger-ui/dist/');
 
 // register endpoints by specifying class and method name
@@ -110,4 +110,87 @@ When calling index.php, this is what we'll finally get:
 
 ![image](https://github.com/lnaegele/PSwag/assets/2114595/14c56bb3-196a-456b-8607-8892a23aaa0d)
 
-That's it! I hope it is useful to you :-)
+## Authentication
+
+To secure your API endpoints, different standards are supported by PSwag out of the box. When used, OpenAPI specification will also include corresponding auth config automatically. 
+
+### Basic Authentication
+To secure an endpoint with BasicAuth, create a Middleware class that extends from ```BasicAuthMiddleware```:
+
+```php
+class MyBasicAuthMiddleware extends BasicAuthMiddleware
+{
+    public function isUserCredentialValid(string $username, string $password): bool {
+        return $username == "user" && $password == "1234"; // Do your magic here
+    }
+}
+```
+
+Add this middleware to all endpoints that you want to secure. You can now verify on Swagger UI that it works as expected.
+
+```php
+$basicAuthMiddleware = new MyBasicAuthMiddleware();
+$app->get('/pet/{petId}', [PetApplicationService::class, 'getPetById'])->add($basicAuthMiddleware);
+```
+
+Please note: When securing multiple endpoints with the same instance of middleware instead of creating a new instance each, Swagger UI is aware that authentication data does not need to be re-entered for each endpoint.
+
+### Bearer Authentication
+To secure an endpoint with Bearer, create a Middleware class that extends from ```BearerAuthMiddleware```:
+
+```php
+class MyBearerAuthMiddleware extends BearerAuthMiddleware
+{
+    public function getBearerFormat(): ?string {
+        return null; // There is no logic connected with it. Can be "JWT", for example.
+    }
+    
+    public function isBearerTokenValid(string $bearerToken): bool {
+        return $bearerToken == "1234"; // Do your magic here
+    }
+}
+```
+
+Add this middleware to all endpoints that you want to secure. You can now verify on Swagger UI that it works as expected.
+
+```php
+$bearerAuthMiddleware = new MyBearerAuthMiddleware();
+$app->get('/pet/{petId}', [PetApplicationService::class, 'getPetById'])->add($bearerAuthMiddleware);
+```
+
+Please note: When securing multiple endpoints with the same instance of middleware instead of creating a new instance each, Swagger UI is aware that authentication data does not need to be re-entered for each endpoint.
+
+### API Keys
+To secure an endpoint with API Keys, create a Middleware class that extends from ```ApiKeysAuthMiddleware```:
+
+```php
+class MyApiKeyAuthMiddleware extends ApiKeyAuthMiddleware
+{
+    public function getName(): string {
+        return "X-API-KEY"; // Specifies the name of the cookie / header / query param that will contain the API Key
+    }
+
+    public function getIn(): ApiKeyInType {
+        return ApiKeyInType::Cookie; // Specifies how API Key is sent to the endpoint: Cookie, Header, Query 
+    }
+    
+    public function isApiKeyValid(string $apiKey): bool {
+        return $apiKey == "1234"; // Do your magic here
+    }
+}
+```
+Please note that ```Header``` is currently not supported as transportation type for API Keys.
+Add this middleware to all endpoints that you want to secure. You can now verify on Swagger UI that it works as expected.
+
+```php
+$apiKeyAuthMiddleware = new MyApiKeyAuthMiddleware();
+$app->get('/pet/{petId}', [PetApplicationService::class, 'getPetById'])->add($apiKeyAuthMiddleware);
+```
+
+Please note: When securing multiple endpoints with the same instance of middleware instead of creating a new instance each, Swagger UI is aware that authentication data does not need to be re-entered for each endpoint.
+
+### OAuth 2.0
+Not yet supported. Will come with a later version.
+
+### OpenID Connect Discovery
+Not yet supported. Will come with a later version.

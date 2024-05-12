@@ -2,6 +2,12 @@
 declare(strict_types=1);
 namespace PSwag\Swagger;
 
+use Exception;
+use PSwag\Authentication\ApiKeyAuthMiddleware;
+use PSwag\Authentication\ApiKeyInType;
+use PSwag\Authentication\BasicAuthMiddleware;
+use PSwag\Authentication\BearerAuthMiddleware;
+use PSwag\Authentication\Interfaces\AuthMiddlewareInterface;
 use PSwag\EndpointDefinition;
 use PSwag\Model\CustomResult;
 use PSwag\Model\Property;
@@ -19,8 +25,14 @@ class SwaggerGenerator
     public function generate($applicationName, $version, $pathPrefix): array
     {        
         $schemaDefinitions = [
-            "types" => [],
-            "definitions" => []
+            "schemas" => [
+                "types" => [],
+                "definitions" => []
+            ],
+            "securitySchemes" => [
+                "cache" => [],
+                "definitions" => []
+            ]
         ];
 
         return array(
@@ -36,7 +48,8 @@ class SwaggerGenerator
             ],
             "paths" => $this->generatePaths($schemaDefinitions),
             "components" => [
-                "schemas" => $schemaDefinitions["definitions"]
+                "schemas" => $schemaDefinitions["schemas"]["definitions"],
+                "securitySchemes" => $schemaDefinitions["securitySchemes"]["definitions"]
             ]
         );
     }
@@ -46,18 +59,22 @@ class SwaggerGenerator
         $result = [];
         foreach ($this->registry->getAll() as $endpoint) {
             /** @var EndpointDefinition $endpoint */
-            $path = $this->generatePath($endpoint, $schemaDefinitions);
-            
-            $pattern = $endpoint->getPattern();
-            if (!array_key_exists($pattern, $result)) $result[$pattern] = [];
-            $result[$pattern][strtolower($endpoint->getMethod())] = $path;
+            foreach ($endpoint->getMethods() as $method) {
+                $path = $this->generatePath($method, $endpoint, $schemaDefinitions);
+                
+                $pattern = $endpoint->getPattern();
+                if (!array_key_exists($pattern, $result)) $result[$pattern] = [];
+                $result[$pattern][strtolower($method)] = $path;
+            }
         }
 
         return $result;
     }
 
-    private function generatePath(EndpointDefinition $endpoint, array &$schemaDefinitions) : array
+    private function generatePath(string $method, EndpointDefinition $endpoint, array &$schemaDefinitions) : array
     {
+        $isQueryRequest = in_array($method, ['GET', 'DELETE']);
+
         $pathParameters = [];
         $methodParameters = [];
         $requestBody = null;
@@ -67,7 +84,6 @@ class SwaggerGenerator
         $pathVariableProperties = [];
         
         // Method parameters
-        $isQueryRequest = in_array($endpoint->getMethod(), ['GET', 'DELETE']);
         $properties = $this->reflectionHelper->getPropertiesFromMethodParameters($endpoint->getApplicationServiceClass(), $endpoint->getApplicationServiceMethod(), $isQueryRequest);
         if ($isQueryRequest) {
             // If there is only one single property and it is of custom dto type, overwrite $properties with its properties
@@ -164,9 +180,26 @@ class SwaggerGenerator
         if (count($parameters) > 0) $result["parameters"] = $parameters;
         if ($requestBody) $result["requestBody"] = $requestBody;
 
+        // summary
         $summary = $this->reflectionHelper->getMethodSummaryFromDoc($endpoint->getApplicationServiceClass(), $endpoint->getApplicationServiceMethod());
         if ($summary != null) {
             $result["summary"] = $summary;
+        }
+
+        // security
+        $authMiddlewares = $endpoint->getAuthMiddlewares();
+        if (count($authMiddlewares) > 0) {
+            $securitySchemes = [];
+            foreach($authMiddlewares as $authMiddleware) {
+                $securitySchemaName = $this->createSecuritySchemaIfNeededAndReturnName($authMiddleware, $schemaDefinitions);
+                $securitySchemes[$securitySchemaName] = [];  // possibility to create logial AND; inside array, scopes can be defined
+            }
+            $result["security"][] = $securitySchemes; // possibility to create logial AND
+            
+            // TODO: add more information about specific auth method
+            $result["responses"]["401"] = [
+                "description" => "Authentication is missing or invalid"
+            ];
         }
 
         // Return type
@@ -303,9 +336,9 @@ class SwaggerGenerator
         $simpleName = end($parts);
         $hash = json_encode($typeSchema);
 
-        if (!array_key_exists($simpleName, $schemaDefinitions["types"])) {
+        if (!array_key_exists($simpleName, $schemaDefinitions["schemas"]["types"])) {
             // First setup $schemaDefinitions in order to support Dto recursivness
-            $schemaDefinitions["types"][$simpleName] = $hash;
+            $schemaDefinitions["schemas"]["types"][$simpleName] = $hash;
 
             if ($typeSchema->isEnum()) {
                 $schemaDefinition = $this->createObjectSchemaFromEnum($typeSchema->getType());
@@ -316,13 +349,69 @@ class SwaggerGenerator
                 throw new \Exception("Can not create object definition for type '" . $typeSchema->getType() . "'.");
             }
 
-            $schemaDefinitions["definitions"][$simpleName] = $schemaDefinition;
+            $schemaDefinitions["schemas"]["definitions"][$simpleName] = $schemaDefinition;
         }
-        else if ($schemaDefinitions["types"][$simpleName] !== $hash) {
+        else if ($schemaDefinitions["schemas"]["types"][$simpleName] !== $hash) {
             throw new \Exception("Same DTO name '" . $simpleName . "' is used more than once.");
         }
 
         return "#/components/schemas/" . $simpleName;
+    }
+
+    private function createSecuritySchemaIfNeededAndReturnName(AuthMiddlewareInterface $authMiddleware, array &$schemaDefinitions) : string
+    {
+        $stringifiedObject = spl_object_id($authMiddleware);
+        if (array_key_exists($stringifiedObject, $schemaDefinitions["securitySchemes"]["cache"])) {
+            return $schemaDefinitions["securitySchemes"]["cache"][$stringifiedObject];
+        }
+        
+        $definition = [];
+        $nameSuggestion = "";
+
+        // BasicAuth
+        if ($authMiddleware instanceof BasicAuthMiddleware) {
+            $nameSuggestion = "BasicAuth";
+            $definition["type"] = "http";
+            $definition["scheme"] = "basic";
+        }
+        
+        // Bearer
+        else if ($authMiddleware instanceof BearerAuthMiddleware) {
+            $nameSuggestion = "Bearer";
+            $definition["type"] = "http";
+            $definition["scheme"] = "bearer";
+            $bearerFormat = $authMiddleware->getBearerFormat();
+            if ($bearerFormat != null) $definition["bearerFormat"] = $bearerFormat;
+        }
+
+        // ApiKey
+        else if ($authMiddleware instanceof ApiKeyAuthMiddleware) {
+            $nameSuggestion = "ApiKey";
+            $definition["type"] = "apiKey";
+            $definition["name"] = $authMiddleware->getName();
+            $definition["in"] = match ($authMiddleware->getIn()) {
+                ApiKeyInType::Header => "header",
+                ApiKeyInType::Cookie => "cookie",
+                ApiKeyInType::Query => throw new Exception("Value '".$authMiddleware->getIn()."' for parameter 'in' is not yet supported for ApiKey authentication."), // "query", // not yet supported, query param needs to be ignored by mapper or it would throw an error
+                default => throw new Exception("Value '".$authMiddleware->getIn()."' is not allowed for parameter 'in' for ApiKey authentication."),
+            };
+        }
+
+        else {
+            throw new Exception("AuthMiddleware '".get_class($authMiddleware)."' must implement one of following types: BasicAuthMiddleware, BearerAuthMiddleware, ApiKeyAuthMiddlewaree.");
+        }
+
+        // find unique name
+        $name = $nameSuggestion;
+        $i = 2;
+        while (true) {
+            if (!array_key_exists($name, $schemaDefinitions["securitySchemes"]["definitions"])) break;
+            $name = $nameSuggestion . $i++;
+        }
+
+        $schemaDefinitions["securitySchemes"]["definitions"][$name] = $definition;
+        $schemaDefinitions["securitySchemes"]["cache"][$stringifiedObject] = $name;
+        return $name;
     }
 }
 ?>
