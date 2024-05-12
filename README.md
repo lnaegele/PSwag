@@ -2,6 +2,8 @@
 
 Easily create a REST API for your PHP functions - same way as you might know from ABP framework's application services - without the need to juggle with Requests and Responses anymore. All you need to do is providing proper type definitions for method parameters and return types of your endpoint functions.
 
+While many api-first approaches exist that generate server-side code from a predefined OpenAPI specification, or derive this from a proprietary documentation as extension to code, the project PSwag aims at code-first and auto generation (on the fly) of swagger endpoints by relying on code directly that just needs to be properly typed.
+
 ## PSwag is an extension (wrapper) to Slim
 - It automatically maps your custom method signatures to REST API endpoints
 - It provides an always-up-to-date OpenAPI 3.0 specification of your REST API endpoints
@@ -9,12 +11,13 @@ Easily create a REST API for your PHP functions - same way as you might know fro
 - It supports GET, PUT, DELETE, PATCH, POST
 - It supports PHP inbuilt types, enums, custom classes, arrays (of both, inbuilt and custom types), nullables
 - Code annotations are directly used to show as descriptions in Swagger
+- When calling a REST endpoint, the request is automatically transformed and mapped PHP method is invoked
+- The return result of PHP method is automatically transformed to REST result and returned to endpoint caller
 
 ## How to use with Composer
 1. Edit your composer.json and add following:
 ```json
 "require": {
-    "...": "...",
     "pswag/pswag": "dev-main"
 },
 "repositories": [
@@ -27,7 +30,7 @@ Easily create a REST API for your PHP functions - same way as you might know fro
 2. Execute ```composer install``` in terminal.
 
 ## Basic example: Petstore
-Let's create an example for a Petstore. To specify an endpoint for our REST API, we first create a method  ```getPetById``` that takes an id and returns an object of type ```Pet```.
+Let's create an example for a Petstore. To specify an endpoint for our REST API, first create a method  ```getPetById``` that takes an id and returns an object of type ```Pet```.
 ```php
 class PetApplicationService
 {
@@ -41,7 +44,9 @@ class PetApplicationService
     }
 }
 ```
-Note that all parameters and also return type need to be properly typed in order to enable PSwag to derive the OpenAPI specification. When using custom types, e.g. classes ```Pet```, ```Category``` and ```Tag```, all of their properties need to be typed as well. Have a look at class ```Pet```:
+Note that all parameters and also return type need to be properly typed in order to enable PSwag to derive the OpenAPI specification. Method comments can be used to provide descriptions or more specific datatypes.
+
+When using custom types, e.g. classes ```Pet```, ```Category``` and ```Tag```, all of their properties need to be typed as well. Let's have a look at class ```Pet```:
 ```php
 class Pet
 {
@@ -61,11 +66,12 @@ class Pet
 }
 ?>
 ```
-For ```$photoUrls``` the type ```array``` is not sufficient. In such cases, its unique datatype can be specified as annotation with ```/** @var string[] $photoUrls */```. Now, PSwag knows how to use it in our endpoints. Same applies to ```$tags```, but in addition we're using a custom class inside the array.
+For ```$photoUrls``` the type ```array``` is not sufficient. In such cases, its unique datatype can be specified as annotation with ```/** @var string[] $photoUrls */```. Now, PSwag knows how to use it for endpoints. Same applies to ```$tags```, but in addition there is a custom class used as array.
 
 IMPORTANT: When not in the same namespace as ```Pet```, class ```Tag``` must be referenced with fully qualified namespace in order to be resolvable by PSwag.
 
-Finally, we create a Slim application in our index.php and register our method to it:
+Finally, create a Slim application in index.php and register method ```getPetById``` to it:
+
 ```php
 <?php
 require_once "vendor\\autoload.php";
@@ -98,7 +104,9 @@ $app->run();
 ?>
 ```
 
-And this is what we'll finally get when calling index.php:
+In this example, path variables are used for GET and DELETE endpoints. When specified, PSwag tries to automatically map path variables to method parameters of target method by name. If there isn't, it will add an additional input of type string to swagger - however, its value will never be passed to target function then.
+
+When calling index.php, this is what we'll finally get:
 
 ![image](https://github.com/lnaegele/PSwag/assets/2114595/14c56bb3-196a-456b-8607-8892a23aaa0d)
 
