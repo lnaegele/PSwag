@@ -39,7 +39,7 @@ class PSwagApp implements RouteCollectorProxyInterface
      */
     public function addSwaggerUiMiddleware(string $pattern, string $applicationName, string $version, string $pathToSwaggerUiDist): SwaggerUiMiddleware
     {
-        $swaggerUiMiddleware = new SwaggerUiMiddleware($pattern, $applicationName, $version, $pathToSwaggerUiDist, $this->getResponseFactory(), $this->registry, $this->getRouteCollector(), $this->getContainer());
+        $swaggerUiMiddleware = new SwaggerUiMiddleware($pattern, $applicationName, $version, $pathToSwaggerUiDist, $this->registry, $this->getRouteCollector(), $this->getContainer());
         $this->add($swaggerUiMiddleware);
         return $swaggerUiMiddleware;
     }

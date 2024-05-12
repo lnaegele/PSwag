@@ -4,7 +4,6 @@ namespace PSwag\Swagger;
 
 use Exception;
 use Psr\Container\ContainerInterface;
-use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
@@ -15,6 +14,7 @@ use PSwag\Swagger\SwaggerGenerator;
 use Slim\Exception\HttpBadRequestException;
 use Slim\Exception\HttpNotFoundException;
 use Slim\Interfaces\RouteCollectorInterface;
+use Slim\Psr7\Response;
 
 class SwaggerUiMiddleware implements MiddlewareInterface
 {
@@ -25,7 +25,6 @@ class SwaggerUiMiddleware implements MiddlewareInterface
         private string $applicationName,
         private string $version,
         private string $pathToSwaggerUiDist,
-        private ResponseFactoryInterface $responseFactory,
         PSwagRegistry $registry,
         private RouteCollectorInterface $routeCollector,
         ?ContainerInterface $container)
@@ -53,7 +52,7 @@ class SwaggerUiMiddleware implements MiddlewareInterface
 
             // redirect to path
             if ($route == $pathPrefix) {
-                return $this->responseFactory->createResponse(302)->withHeader('Location', $pathPrefix . '/');
+                return (new Response())->withStatus(302)->withHeader('Location', $pathPrefix . '/');
             }
 
             // provide swagger configuration
@@ -103,7 +102,7 @@ class SwaggerUiMiddleware implements MiddlewareInterface
     }
 
     private function createResponseFromStringContent(string $content, string $contentType, int $statusCode=200): ResponseInterface {
-        $response = $this->responseFactory->createResponse($statusCode);
+        $response = (new Response())->withStatus($statusCode);
         $response->getBody()->write($content);
         return $response->withHeader('Content-Type', $contentType);
     }

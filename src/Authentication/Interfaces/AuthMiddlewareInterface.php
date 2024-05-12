@@ -1,6 +1,6 @@
 <?PHP
 declare(strict_types=1);
-namespace PSwag\Interfaces;
+namespace PSwag\Authentication\Interfaces;
 
 use Psr\Http\Server\MiddlewareInterface;
 

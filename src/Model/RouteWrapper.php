@@ -6,8 +6,8 @@ use Exception;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
+use PSwag\Authentication\Interfaces\AuthMiddlewareInterface;
 use PSwag\EndpointDefinition;
-use PSwag\Interfaces\AuthMiddlewareInterface;
 use Slim\Interfaces\InvocationStrategyInterface;
 use Slim\Interfaces\RouteInterface;
 

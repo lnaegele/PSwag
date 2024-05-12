@@ -3,12 +3,12 @@ declare(strict_types=1);
 namespace PSwag\Swagger;
 
 use Exception;
+use PSwag\Authentication\ApiKeyAuthMiddleware;
+use PSwag\Authentication\ApiKeyInType;
+use PSwag\Authentication\BasicAuthMiddleware;
+use PSwag\Authentication\BearerAuthMiddleware;
+use PSwag\Authentication\Interfaces\AuthMiddlewareInterface;
 use PSwag\EndpointDefinition;
-use PSwag\Interfaces\ApiKeyAuthMiddlewareInterface;
-use PSwag\Interfaces\ApiKeyInType;
-use PSwag\Interfaces\AuthMiddlewareInterface;
-use PSwag\Interfaces\BasicAuthMiddlewareInterface;
-use PSwag\Interfaces\BasicAuthSchemeType;
 use PSwag\Model\CustomResult;
 use PSwag\Model\Property;
 use PSwag\Model\TypeSchema;
@@ -369,23 +369,23 @@ class SwaggerGenerator
         $nameSuggestion = "";
 
         // BasicAuth
-        if ($authMiddleware instanceof BasicAuthMiddlewareInterface) {
+        if ($authMiddleware instanceof BasicAuthMiddleware) {
             $nameSuggestion = "BasicAuth";
             $definition["type"] = "http";
-            $scheme = $authMiddleware->getScheme();
-            $definition["scheme"] = match ($authMiddleware->getScheme()) {
-                BasicAuthSchemeType::Basic => "basic",
-                BasicAuthSchemeType::Bearer => "bearer",
-                default => throw new Exception("Value '".$authMiddleware->getScheme()."' is not allowed for parameter 'scheme' for basic authentication."),
-            };
-            if ($scheme==BasicAuthSchemeType::Bearer) {
-                $bearerFormat = $authMiddleware->getBearerFormat();
-                if ($bearerFormat != null) $definition["bearerFormat"] = $bearerFormat;
-            }
-        }        
+            $definition["scheme"] = "basic";
+        }
+        
+        // Bearer
+        else if ($authMiddleware instanceof BearerAuthMiddleware) {
+            $nameSuggestion = "Bearer";
+            $definition["type"] = "http";
+            $definition["scheme"] = "bearer";
+            $bearerFormat = $authMiddleware->getBearerFormat();
+            if ($bearerFormat != null) $definition["bearerFormat"] = $bearerFormat;
+        }
 
         // ApiKey
-        else if ($authMiddleware instanceof ApiKeyAuthMiddlewareInterface) {
+        else if ($authMiddleware instanceof ApiKeyAuthMiddleware) {
             $nameSuggestion = "ApiKey";
             $definition["type"] = "apiKey";
             $definition["name"] = $authMiddleware->getName();
@@ -398,7 +398,7 @@ class SwaggerGenerator
         }
 
         else {
-            throw new Exception("AuthMiddleware '".get_class($authMiddleware)."' must implement one of following types: BasicAuthMiddlewareInterface, ApiKeyAuthMiddlewareInterface.");
+            throw new Exception("AuthMiddleware '".get_class($authMiddleware)."' must implement one of following types: BasicAuthMiddleware, BearerAuthMiddleware, ApiKeyAuthMiddlewaree.");
         }
 
         // find unique name

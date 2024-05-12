@@ -2,7 +2,7 @@
 declare(strict_types=1);
 namespace PSwag;
 
-use PSwag\Interfaces\AuthMiddlewareInterface;
+use PSwag\Authentication\Interfaces\AuthMiddlewareInterface;
 
 class EndpointDefinition {
 
