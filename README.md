@@ -180,7 +180,7 @@ class MyApiKeyAuthMiddleware extends ApiKeyAuthMiddleware
     }
 }
 ```
-Please note that ```Header``` is currently not supported as transportation type for API Keys.
+Please note that ```Query``` is currently not supported as transportation type for API Keys.
 Add this middleware to all endpoints that you want to secure. You can now verify on Swagger UI that it works as expected.
 
 ```php
