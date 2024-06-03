@@ -16,25 +16,13 @@ abstract class BearerAuthMiddleware implements AuthMiddlewareInterface
     public abstract function isBearerTokenValid(string $bearerToken): bool;
 
     public final function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface {
-        $bearerToken = $this->getBearerTokenFromRequest($request);
+        $bearerToken = HeaderHelper::getAuthorizationHeader($request, "Bearer ");
 
         if ($bearerToken == null || !$this->isBearerTokenValid($bearerToken)) {
             return new Response(StatusCodeInterface::STATUS_UNAUTHORIZED);
         }
         
         return $handler->handle($request);
-    }
-
-    private function getBearerTokenFromRequest(ServerRequestInterface $request): ?string
-    {
-        $headers = $request->getHeader("Authorization");
-        foreach ($headers as $header) {
-            if (str_starts_with($header, "Bearer ")) {
-                return substr($header, 7);
-            }
-        }
-
-        return null;
     }
 }
 ?>

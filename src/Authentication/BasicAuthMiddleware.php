@@ -14,7 +14,7 @@ abstract class BasicAuthMiddleware implements AuthMiddlewareInterface
     public abstract function isUserCredentialValid(string $username, string $password): bool;
 
     public final function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface {
-        $authToken = $this->getAuthTokenFromRequest($request);
+        $authToken = HeaderHelper::getAuthorizationHeader($request, "Basic ");
 
         if ($authToken == null) {
             return new Response(StatusCodeInterface::STATUS_UNAUTHORIZED);
@@ -31,18 +31,6 @@ abstract class BasicAuthMiddleware implements AuthMiddlewareInterface
         }
         
         return $handler->handle($request);
-    }
-
-    private function getAuthTokenFromRequest(ServerRequestInterface $request): ?string
-    {
-        $headers = $request->getHeader("Authorization");
-        foreach ($headers as $header) {
-            if (str_starts_with($header, "Basic ")) {
-                return substr($header, 6);
-            }
-        }
-
-        return null;
     }
 }
 ?>

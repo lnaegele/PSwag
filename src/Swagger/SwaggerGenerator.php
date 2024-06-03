@@ -216,7 +216,7 @@ class SwaggerGenerator
         } else if (!$returnTypeSchema->isVoid()) {
             $returnSchema = $this->getSchema($returnTypeSchema, $schemaDefinitions);
             if ($returnSchema) $result["responses"]["200"]["content"] = [
-                "appliation/json" => [
+                "application/json" => [
                     "schema" => $returnSchema
                 ]
             ];
