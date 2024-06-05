@@ -259,11 +259,12 @@ class PSwagApp implements RouteCollectorProxyInterface
     public function map(array $methods, string $pattern, $callable): RouteInterface
     {
         // TODO: only allow class name + method name, or class with __invoke method, forbid lamdas as they do not work with reflection(?)
-        if (!is_array($callable) || count($callable) != 2) {
+        if (!is_array($callable) || (count($callable) != 2 && count($callable) != 3)) {
             return $this->app->map($methods, $pattern, $callable);
         }
 
-        $endpoint = new EndpointDefinition($pattern, $methods,  $callable[0], $callable[1]);
+        $applicationTags = count($callable)<3 ? null : (is_array($callable[2]) ? $callable[2] : [$callable[2]]);
+        $endpoint = new EndpointDefinition($pattern, $methods,  $callable[0], $callable[1], $applicationTags);
         $this->registry->register($endpoint);
 
         $reflectionHelper = new ReflectionHelper($this->getContainer());        

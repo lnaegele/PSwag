@@ -15,6 +15,8 @@ class EndpointDefinition {
         private array $methods,
         private string $applicationServiceClass,
         private string $applicationServiceMethod,
+        /** @var ?string[] $applicationTags */
+        private ?array $applicationTags,
     ) {}
 
     public function addAuthMiddleware(AuthMiddlewareInterface $middleware): void {
@@ -56,6 +58,10 @@ class EndpointDefinition {
 
     public function getApplicationServiceMethod(): string {
         return $this->applicationServiceMethod;
+    }
+
+    public function getApplicationTags(): ?array {
+        return $this->applicationTags;
     }
 
     /**

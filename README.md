@@ -111,6 +111,19 @@ In above example, path variables are used for GET and DELETE endpoints. When spe
 Swagger UI shows dedicated input fields for path variables. Because original data fields (query params or dto properties) would be duplicated with parameter mapping mentioned above, PSwag removes them from original data fields. Example: Endpoint ```/pet/{petId}``` uses value provided for path variable ```petId``` as value for method parameter ```int $petId```, and there will be no additional input field for it anymore.
 PSwag tries to automatically derive the value type from the method signature (in this example ```int```) and will set it as type for its corresponding path variable.
 
+## Tags
+
+Grouping tags for swagger are automatically derived from the path by the first item after a slash. E.g. ```/pet/{petId}``` will be grouped by tag ```pet```. However, this tag can be manually overwritten when registering the endpoint to PSwag by specifying it as a third element in the array:
+
+```php
+// register endpoint with a custom tag as third parameter of the array
+$app->get('/pet/{petId}', [PetApplicationService::class, 'getPetById']); // defaults to 'pet'
+$app->get('/pet/{petId}', [PetApplicationService::class, 'getPetById', 'groupingTag']); // custom tag
+$app->get('/pet/{petId}', [PetApplicationService::class, 'getPetById', ['groupingTag']]); // can be also an array
+$app->get('/pet/{petId}', [PetApplicationService::class, 'getPetById', ['groupingTag', 'otherTag']]); // multiple tags
+$app->get('/pet/{petId}', [PetApplicationService::class, 'getPetById', []]); // no tag
+```
+
 ## Authentication
 
 To secure your API endpoints, different standards are supported by PSwag out of the box. When used, OpenAPI specification will also include corresponding auth config automatically. 

@@ -164,9 +164,13 @@ class SwaggerGenerator
             $pathParameters[] = $pathParameter;
         }
         
-        // determine tags: always first path, after a "/" prefix. E.g. /ThisIsTag/GetById
-        $routeParts = explode("/", $endpoint->getPattern(), 3);
-        $tags = count($routeParts) >= 2  ? [$routeParts[1]] : [];
+        $applicationTags = $endpoint->getApplicationTags();
+        if ($applicationTags !== null) $tags = $applicationTags;
+        else {
+            // determine tags if not set explicitly: always first path, after a "/" prefix. E.g. /ThisIsTag/GetById => ThisIsTag
+            $routeParts = explode("/", $endpoint->getPattern(), 3);
+            $tags = count($routeParts) >= 2  ? [$routeParts[1]] : [];
+        }
         $result = [
             "tags" => $tags,
             "operationId" => $endpoint->getApplicationServiceMethod(),
