@@ -30,6 +30,12 @@ class PSwagApp implements RouteCollectorProxyInterface
     public function __construct(private App $app)
     {
         $this->registry = new PSwagRegistry();
+
+        // try to automatically determine base path
+        $requestUri = $_SERVER['REQUEST_URI']; // e.g. /api/Auth/UserInfo/?param=test
+        $pathInfoLength = strlen($_SERVER['PATH_INFO'] ?? $_SERVER['ORIG_PATH_INFO']); // e.g. /Auth/UserInfo/
+        $queryStringLength = $_SERVER['QUERY_STRING']==null ? 0 : strlen($_SERVER['QUERY_STRING'])+1; // e.g. param=test
+        $this->setBasePath(substr($requestUri, 0, strlen($requestUri) - $pathInfoLength - $queryStringLength)); // e.g. /api
     }
 
     /**
@@ -37,7 +43,7 @@ class PSwagApp implements RouteCollectorProxyInterface
      *
      * @return SwaggerUiMiddleware
      */
-    public function addSwaggerUiMiddleware(string $pattern, string $applicationName, string $version, string $pathToSwaggerUiDist): SwaggerUiMiddleware
+    public function addSwaggerUiMiddleware(string $pattern, string $applicationName, string $version, string $pathToSwaggerUiDist = __DIR__.'/../../../swagger-api/swagger-ui/dist/'): SwaggerUiMiddleware
     {
         $swaggerUiMiddleware = new SwaggerUiMiddleware($pattern, $applicationName, $version, $pathToSwaggerUiDist, $this->registry, $this->getRouteCollector(), $this->getContainer());
         $this->add($swaggerUiMiddleware);
