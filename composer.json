@@ -1,11 +1,21 @@
 {
     "name": "pswag/pswag",
+    "description": "Code-first REST API and Swagger generation for PHP",
+    "license": "MIT",
+    "authors": [
+    {
+        "name": "Ludwig Nägele",
+        "email": "info@jolutions.de",
+        "homepage": "https://www.jolutions.de",
+        "role": "Developer"
+    }],
     "autoload": {
         "psr-4": {
             "PSwag\\": "src/"
         }
     },
     "require": {
+        "php": ">=8.2",
         "slim/slim": "^4.12",
         "swagger-api/swagger-ui": "^5.9",
         "doctrine/annotations": "^2.0"
