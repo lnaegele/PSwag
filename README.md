@@ -15,20 +15,12 @@ PSwag is an extension to Slim and you can use all functionalities of it. In addi
 - The return result of PHP method is automatically transformed to REST result and returned to endpoint caller
 - Authentication is supported for BasicAuth, Bearer and API Keys
 
-## How to use with Composer
-1. Edit your composer.json and add following:
-```json
-"require": {
-    "pswag/pswag": "dev-main"
-},
-"repositories": [
-    {
-        "type": "vcs",
-        "url": "https://github.com/lnaegele/PSwag.git"
-    }
-]
-```
-2. Execute ```composer install``` in terminal.
+## Installation
+It's recommended that you use Composer to install PSwag.
+
+```$ composer require pswag/pswag```
+
+This will install PSwag and all required dependencies. PSwag requires PHP 8.2 or newer.
 
 ## Basic example: Petstore
 Let's create an example for a Petstore. To specify an endpoint for our REST API, first create a method  ```getPetById``` that takes an id and returns an object of type ```Pet```.
