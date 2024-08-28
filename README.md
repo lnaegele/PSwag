@@ -20,7 +20,7 @@ It's recommended that you use Composer to install PSwag.
 
 ```$ composer require pswag/pswag```
 
-This will install PSwag and all required dependencies. PSwag requires PHP 8.2 or newer.
+This will install PSwag and all required dependencies.
 
 ## Basic example: Petstore
 Let's create an example for a Petstore. To specify an endpoint for our REST API, first create a method  ```getPetById``` that takes an id and returns an object of type ```Pet```.

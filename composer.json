@@ -15,7 +15,6 @@
         }
     },
     "require": {
-        "php": ">=8.2",
         "slim/slim": "^4.12",
         "swagger-api/swagger-ui": "^5.9",
         "doctrine/annotations": "^2.0"
