@@ -67,13 +67,13 @@ class RequestHandler
             $returnType = $this->reflectionHelper->getTypeSchemaFromMethodReturnType($className, $methodName);
             if ($returnType->getType()==CustomResult::class) {
                 /** @var CustomResult $result */
-                $response->getBody()->write($result->body);
+                $response->getBody()->write(''.($result->body));
                 $response = $response->withAddedHeader('Content-Type', $result->mimeType);
                 if ($result->fileName!=null) $response = $response->withAddedHeader('Content-disposition', 'inline;filename="'.str_replace('"', '_', $result->fileName).'"');
             } else if (!$returnType->isVoid()) {
                 $resultJson = json_encode($result, JSON_UNESCAPED_SLASHES);
                 $response = $response->withHeader('Content-Type', 'application/json; charset=utf-8');
-                $response->getBody()->write($resultJson);
+                $response->getBody()->write(''.$resultJson);
             }
             return $response;
         } finally {
