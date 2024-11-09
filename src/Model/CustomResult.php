@@ -13,6 +13,8 @@ class CustomResult
         public string $mimeType,
         public string $body,
         public ?string $fileName=null,
+        public ?int $lastModifiedTime=null,
+        public ?int $cacheMaxAge=null,
     ) {}
 }
 ?>

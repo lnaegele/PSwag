@@ -33,7 +33,7 @@ class PSwagApp implements RouteCollectorProxyInterface
 
         // try to automatically determine base path
         $requestUri = $_SERVER['REQUEST_URI']; // e.g. /api/Auth/UserInfo/?param=test
-        $pathInfoLength = strlen($_SERVER['PATH_INFO'] ?? $_SERVER['ORIG_PATH_INFO']); // e.g. /Auth/UserInfo/
+        $pathInfoLength = strlen($_SERVER['PATH_INFO'] ?? (array_key_exists('ORIG_PATH_INFO', $_SERVER) ? $_SERVER['ORIG_PATH_INFO'] : null) ?? '/'); // e.g. /Auth/UserInfo/
         $queryStringLength = $_SERVER['QUERY_STRING']==null ? 0 : strlen($_SERVER['QUERY_STRING'])+1; // e.g. param=test
         $this->setBasePath(substr($requestUri, 0, strlen($requestUri) - $pathInfoLength - $queryStringLength)); // e.g. /api
     }

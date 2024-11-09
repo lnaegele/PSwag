@@ -70,6 +70,8 @@ class RequestHandler
                 $response->getBody()->write(''.($result->body));
                 $response = $response->withAddedHeader('Content-Type', $result->mimeType);
                 if ($result->fileName!=null) $response = $response->withAddedHeader('Content-disposition', 'inline;filename="'.str_replace('"', '_', $result->fileName).'"');
+                if ($result->cacheMaxAge!=null) $response = $response->withAddedHeader('Cache-control', 'max-age='.$result->cacheMaxAge)->withAddedHeader('Expires', gmdate(DATE_RFC1123,time()+$result->cacheMaxAge));
+                if ($result->lastModifiedTime!=null) $response = $response->withAddedHeader('Last-Modified', gmdate(DATE_RFC1123,$result->lastModifiedTime));
             } else if (!$returnType->isVoid()) {
                 $resultJson = json_encode($result, JSON_UNESCAPED_SLASHES);
                 $response = $response->withHeader('Content-Type', 'application/json; charset=utf-8');
