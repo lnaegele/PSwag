@@ -299,4 +299,3 @@ class PSwagApp implements RouteCollectorProxyInterface
         return $this->app->redirect($from, $to, $status);
     }
 }
-?>

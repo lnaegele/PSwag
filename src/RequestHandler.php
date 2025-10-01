@@ -5,7 +5,11 @@ namespace PSwag;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use PSwag\EndpointDefinition;
+use PSwag\Handler\CustomResultHandler;
+use PSwag\Handler\FileStreamResultHandler;
+use PSwag\Handler\JsonResultHandler;
 use PSwag\Model\CustomResult;
+use PSwag\Model\FileStreamResult;
 use PSwag\Model\Property;
 use PSwag\Model\TypeSchema;
 use PSwag\Reflection\ReflectionHelper;
@@ -15,7 +19,7 @@ class RequestHandler
 {
     function __construct(
         private EndpointDefinition $endpoint,
-        private ReflectionHelper $reflectionHelper
+        private ReflectionHelper $reflectionHelper,
     ) {}
 
     public function execute(ServerRequestInterface $request, ResponseInterface $response, array $pathVariables) : ResponseInterface
@@ -33,6 +37,8 @@ class RequestHandler
             $parameters = $this->getParameterValuesFromBody();
             return $this->routeToAppService($request, $response, $parameters, $pathVariables, false);
         }
+
+        throw new HttpBadRequestException($request, "Unsupported method '" . $method . "'.");
     }
     
     private function routeToAppService(ServerRequestInterface $request, ResponseInterface $response, array $parameterValues, array $pathVariables, bool $isQueryRequest) : ResponseInterface
@@ -65,24 +71,23 @@ class RequestHandler
         try {
             $result = $this->reflectionHelper->executeMethod($className, $methodName, $args);
             $returnType = $this->reflectionHelper->getTypeSchemaFromMethodReturnType($className, $methodName);
-            if ($returnType->getType()==CustomResult::class) {
-                /** @var CustomResult $result */
-                $response->getBody()->write(''.($result->body));
-                $response = $response->withAddedHeader('Content-Type', $result->mimeType);
-                if ($result->fileName!=null) $response = $response->withAddedHeader('Content-disposition', 'inline;filename="'.str_replace('"', '_', $result->fileName).'"');
-                if ($result->cacheMaxAge!=null) $response = $response->withAddedHeader('Cache-control', 'max-age='.$result->cacheMaxAge)->withAddedHeader('Expires', gmdate(DATE_RFC1123,time()+$result->cacheMaxAge));
-                if ($result->lastModifiedTime!=null) $response = $response->withAddedHeader('Last-Modified', gmdate(DATE_RFC1123,$result->lastModifiedTime));
-            } else if (!$returnType->isVoid()) {
-                $resultJson = json_encode($result, JSON_UNESCAPED_SLASHES);
-                $response = $response->withHeader('Content-Type', 'application/json; charset=utf-8');
-                $response->getBody()->write(''.$resultJson);
-            }
-            return $response;
-        } finally {
             $output = ob_get_clean();
             if ($output != null && $output != '') {
                 throw new \Exception("Route execution created unexpected output: \"" . $output . "\"");
             }
+
+            if ($returnType->getType()==CustomResult::class) {
+                /** @var CustomResult $result */
+                $response = (new CustomResultHandler())->handle($result, $response);
+            } else if ($returnType->getType()==FileStreamResult::class) {
+                /** @var FileStreamResult $result */
+                $response = (new FileStreamResultHandler())->handle($result, $response);
+            } else if (!$returnType->isVoid()) {
+                $response = (new JsonResultHandler())->handle($result, $response);
+            }
+            return $response;
+        } finally {
+            ob_end_flush();
         }
     }
 
@@ -127,9 +132,9 @@ class RequestHandler
     /**
      * Create a DTO object with defined values
      * @param string[] $pathVariableKeys the names of all variables that are provided inside path
-     * @return object the instantiated DTO
+     * @return ?object the instantiated DTO
      */
-    private function createDtoFromValues(ServerRequestInterface $request, TypeSchema $typeSchema, array $propertyValues, array $pathVariableKeys): object
+    private function createDtoFromValues(ServerRequestInterface $request, TypeSchema $typeSchema, array $propertyValues, array $pathVariableKeys): ?object
     {
         if ($propertyValues==null) {
             if (!$typeSchema->isRequired()) return null;
@@ -230,4 +235,3 @@ class RequestHandler
         return $value;
     }
 }
-?>

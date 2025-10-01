@@ -107,4 +107,3 @@ class SwaggerUiMiddleware implements MiddlewareInterface
         return $response->withHeader('Content-Type', $contentType);
     }
 }
-?>

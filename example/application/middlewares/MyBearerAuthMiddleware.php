@@ -14,4 +14,3 @@ class MyBearerAuthMiddleware extends BearerAuthMiddleware
         return $bearerToken == "1234";
     }
 }
-?>

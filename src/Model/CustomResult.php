@@ -17,4 +17,3 @@ class CustomResult
         public ?int $cacheMaxAge=null,
     ) {}
 }
-?>

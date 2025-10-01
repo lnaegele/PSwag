@@ -33,4 +33,3 @@ abstract class BasicAuthMiddleware implements AuthMiddlewareInterface
         return $handler->handle($request);
     }
 }
-?>

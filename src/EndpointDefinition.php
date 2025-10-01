@@ -73,4 +73,3 @@ class EndpointDefinition {
         return array_map(function ($match) { return $match[0]; }, $matches['match']);
     }
 }
-?>

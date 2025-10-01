@@ -30,4 +30,3 @@ class Property
         return $this->name . ': ' . $this->typeSchema->__toString();
     }
 }
-?>

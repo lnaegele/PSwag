@@ -7,4 +7,3 @@ class Tag
 
     public ?string $name;
 }
-?>

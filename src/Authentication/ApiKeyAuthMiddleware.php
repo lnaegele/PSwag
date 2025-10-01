@@ -69,4 +69,3 @@ enum ApiKeyInType {
     case Query;
     case Cookie;
 }
-?>

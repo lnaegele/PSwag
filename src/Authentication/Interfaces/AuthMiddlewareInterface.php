@@ -7,4 +7,3 @@ use Psr\Http\Server\MiddlewareInterface;
 interface AuthMiddlewareInterface extends MiddlewareInterface
 {
 }
-?>

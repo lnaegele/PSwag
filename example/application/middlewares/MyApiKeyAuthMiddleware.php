@@ -19,4 +19,3 @@ class MyApiKeyAuthMiddleware extends ApiKeyAuthMiddleware
         return $apiKey == "1234";
     }
 }
-?>

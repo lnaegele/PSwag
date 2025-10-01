@@ -25,4 +25,3 @@ abstract class BearerAuthMiddleware implements AuthMiddlewareInterface
         return $handler->handle($request);
     }
 }
-?>

@@ -10,4 +10,3 @@ class MyBasicAuthMiddleware extends BasicAuthMiddleware
         return $username == "user" && $password == "1234";
     }
 }
-?>

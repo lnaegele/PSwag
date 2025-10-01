@@ -73,4 +73,3 @@ class TypeSchema
         return ($this->isRequired ? '' : '?') . $this->type . ($this->format ? '\'' . $this->format : '');
     }
 }
-?>
