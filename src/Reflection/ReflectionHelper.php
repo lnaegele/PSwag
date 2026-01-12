@@ -252,13 +252,12 @@ class ReflectionHelper
      */
     private static function getUseAliasesFromClass(\ReflectionClass $class): array {
         $namespace = $class->getNamespaceName();
-        $aliases = array();
         $classFile = $class->getFileName();
         if ($classFile) {
             $classCode = file_get_contents($classFile);
             $tokenParser = new TokenParser($classCode);
-            $aliases = $tokenParser->parseUseStatements($namespace);
-            return $aliases;
+            return $tokenParser->parseUseStatements($namespace);
         }
+        return [];
     }
 }

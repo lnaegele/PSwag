@@ -132,8 +132,11 @@ class SwaggerGenerator
                 "required" => true,
                 "content" => [
                     "application/json" => [
-                        "schema" => $schema
-                    ]
+                        "schema" => $schema,
+                    ],
+                    "application/x-www-form-urlencoded" => [
+                        "schema" => $schema,
+                    ],
                 ]
             ];
         }

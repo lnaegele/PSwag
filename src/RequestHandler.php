@@ -34,11 +34,18 @@ class RequestHandler
             return $this->routeToAppService($request, $response, $parameters, $pathVariables, true);
         }
         else if (in_array($method, ['POST', 'PUT', 'PATCH'])) {
-            $parameters = $this->getParameterValuesFromBody();
+            $contentTypes = $request->getHeader('Content-Type');
+            if (count($contentTypes)<1) throw new HttpBadRequestException($request, "Header 'Content-Type' is required.");
+            if (count($contentTypes)>1) throw new HttpBadRequestException($request, "Header 'Content-Type' can not occur multiple times.");
+            $contentType = $contentTypes[0];
+            
+            $parameters = [];
+            if ($contentType=='application/json') $parameters = $this->getParameterValuesFromJsonBody();
+            else if ($contentType=='application/x-www-form-urlencoded') $parameters = $this->getParameterValuesFromFormBody();
+            else throw new HttpBadRequestException($request, "Unsupported Content-Type '$contentType'.");
             return $this->routeToAppService($request, $response, $parameters, $pathVariables, false);
         }
-
-        throw new HttpBadRequestException($request, "Unsupported method '" . $method . "'.");
+        else throw new HttpBadRequestException($request, "Unsupported method '$method'.");
     }
     
     private function routeToAppService(ServerRequestInterface $request, ResponseInterface $response, array $parameterValues, array $pathVariables, bool $isQueryRequest) : ResponseInterface
@@ -91,11 +98,18 @@ class RequestHandler
         }
     }
 
-    private function getParameterValuesFromBody()
+    private function getParameterValuesFromJsonBody()
     {
         $json = json_decode(file_get_contents('php://input'), null, 512, JSON_OBJECT_AS_ARRAY);
         $propertyValues = [];
         foreach ($json ?? [] as $key => $value) $propertyValues[$key] = $value;
+        return $propertyValues;
+    }
+
+    private function getParameterValuesFromFormBody()
+    {
+        $propertyValues = [];
+        foreach ($_POST ?? [] as $key => $value) $propertyValues[$key] = $value;
         return $propertyValues;
     }
     
@@ -179,7 +193,7 @@ class RequestHandler
             $expectedType = $expectedProperty->getTypeSchema();
 
             // Allow empty arrays even if required and nothing is passed (swagger is passing null instead of empty arrays)
-            if ($expectedType->isRequired() && !array_key_exists($key, $providedPropertyValues) && $expectedType->isArray()) {
+            if ($expectedType->isArray() && $expectedType->isRequired() && !array_key_exists($key, $providedPropertyValues)) {
                 $providedPropertyValues[$key] = [];
             }
 
@@ -190,8 +204,7 @@ class RequestHandler
     
             $providedPropertyValue = null;
             if (array_key_exists($key, $providedPropertyValues)) {
-
-                // this variable value is provided as path variable it needs to be converted from string
+                // if this variable value is provided as path variable it needs to be converted from string
                 if (in_array($key, $pathVariableKeys)) {
                     $rawProvidedPropertyValue = $expectedType->parse($providedPropertyValues[$key]);
                 } else {
