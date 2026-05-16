@@ -40,8 +40,9 @@ class RequestHandler
             $contentType = $contentTypes[0];
             
             $parameters = [];
-            if ($contentType=='application/json') $parameters = $this->getParameterValuesFromJsonBody();
-            else if ($contentType=='application/x-www-form-urlencoded') $parameters = $this->getParameterValuesFromFormBody();
+            // check with starts_with instead of == because sometimes encodings are added such as 'application/x-www-form-urlencoded;charset=UTF-8';
+            if (str_starts_with($contentType, 'application/json')) $parameters = $this->getParameterValuesFromJsonBody();
+            else if (str_starts_with($contentType, 'application/x-www-form-urlencoded')) $parameters = $this->getParameterValuesFromFormBody();
             else throw new HttpBadRequestException($request, "Unsupported Content-Type '$contentType'.");
             return $this->routeToAppService($request, $response, $parameters, $pathVariables, false);
         }
